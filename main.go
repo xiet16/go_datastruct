@@ -1,11 +1,20 @@
 package main
 
 import (
+   "flag"
+   "github.com/xiet16/go_data_struct/DistributionSort"
    "github.com/xiet16/go_data_struct/Net"
+   "log"
    "os"
-   "os/signal"
-   "syscall"
+   "runtime"
+   "runtime/pprof"
 )
+
+var (
+   cpuprofile = flag.String("cpuprofile","","write cpu profile to file")
+   memprofile = flag.String("memprofile","","write mem profile to file ")
+)
+
 
 func main()  {
    //StackArray.StackArrayTest()
@@ -30,12 +39,35 @@ func main()  {
    //Hash.HashTableTest()
    //DistributionSort.DistributionTest()
 
+   flag.Parse()
+   if *cpuprofile !="" {
+      f,err := os.Create(*cpuprofile)
+      if err!=nil {
+         log.Fatal(err)
+      }else {
+
+      }
+
+      pprof.StartCPUProfile(f)
+      defer  pprof.StopCPUProfile()
+   }
+
    go func() {
       Net.ServerStart()
       Net.ClientStart()
    }()
 
-   quit := make(chan os.Signal)
-   signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-   <-quit
+   DistributionSort.DistributionTest()
+   if *memprofile !="" {
+      f,err:=os.Create(*memprofile)
+      if err!=nil {
+         log.Fatal("could not create memory profile: ", err)
+      }
+      runtime.GC()
+
+      if err:=pprof.WriteHeapProfile(f);err!=nil {
+         log.Fatal("could not write memory profile: ", err)
+      }
+      f.Close()
+   }
 }
